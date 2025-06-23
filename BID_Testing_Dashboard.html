@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Power BI-style Dashboard (Chart.js)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #fff;
+      margin: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+    .header {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+	#sourceSelector {
+    margin-bottom: 20px;
+	}
+
+    .cards {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #f4f4f4;
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      min-width: 200px;
+      margin: 10px;
+    }
+    .card h4 {
+      margin: 5px 0;
+      font-weight: normal;
+      color: #555;
+    }
+    .card .value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #0078d7;
+    }
+    .top-charts {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .top-charts canvas {
+      width: 300px !important;
+      height: 300px !important;
+    }
+    .bottom-charts {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .bottom-charts canvas {
+      flex: 1;
+      max-width: 48%;
+      min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">BID - DATASET TESTING</div>
+    <label for="sourceSelector">Select Source:</label>
+    <select id="sourceSelector" onchange="updateCharts()">
+      <option value="Iris Recognition">Iris Recognition</option>
+      <option value="Fingerprint">Fingerprint</option>
+    </select>
+
+    <div class="cards">
+      <div class="card">
+        <h4>Average Response Time</h4>
+        <div id="avgResponseTime" class="value">-</div>
+      </div>
+      <div class="card">
+        <h4>Max-Min Response Time</h4>
+        <div id="minMaxResponseTime" class="value">-</div>
+      </div>
+      <div class="card">
+        <h4>Average Score</h4>
+        <div id="avgScore" class="value">-</div>
+      </div>
+      <div class="card">
+        <h4>Max-Min Score</h4>
+        <div id="minMaxScore" class="value">-</div>
+      </div>
+    </div>
+
+    <div class="top-charts">
+      <canvas id="pieChart"></canvas>
+      <canvas id="gaugeChart"></canvas>
+    </div>
+
+    <div class="bottom-charts">
+      <canvas id="barChart"></canvas>
+      <canvas id="scatterChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const chartData = {"Fingerprint": {"labels": ["Dataset_01", "Dataset_02", "Dataset_03", "Dataset_04", "Dataset_05", "Dataset_06", "Dataset_07", "Dataset_08", "Dataset_09", "Dataset_10", "Dataset_17", "Dataset_24", "Dataset_26", "Dataset_14", "Dataset_15", "Dataset_16", "Dataset_17", "Dataset_32", "Dataset_19", "Dataset_20", "Dataset_36", "Dataset_37", "Dataset_23", "Dataset_24", "Dataset_25", "Dataset_26", "Dataset_27", "Dataset_28", "Dataset_29", "Dataset_30", "Dataset_31", "Dataset_32", "Dataset_20", "Dataset_34", "Dataset_35", "Dataset_36", "Dataset_37", "Dataset_38", "Dataset_39", "Dataset_40"], "scores": [240.661829999999, 141.15959, 326.0403, 141.15959, 1.0, 60.68919, 60.68919, 6.45879507064819, 60.68919, 1.0, 63.55336, 331.60816, 0.0, 515.78735, 61.469755, 61.469755, 63.55336, 56.6754059999999, 1.0, 63.55336, 359.239159999999, 6.46839332580566, 1.0, 331.60816, 169.14488, 0.0, 6.13164949417114, 169.14488, 61.469755, 56.6754059999999, 6.17561388015747, 56.6754059999999, 60.434337, 56.6754059999999, 61.469755, 359.239159999999, 6.46839332580566, 62.5779719999999, 498.2369, 329.16355], "response_times": [21.44787311553955, 18.5008373260498, 18.84495139122009, 18.2042076587677, 19.47412252426147, 16.95325422286987, 15.39902591705322, 20.99727129936218, 18.65458369255066, 20.52848935127258, 23.901695728302, 27.15663051605225, 0.04447793960571289, 20.16867423057556, 21.3856782913208, 21.76540350914001, 20.04196310043335, 23.51778078079224, 19.22934007644653, 20.64734697341919, 24.82365584373474, 30.62166118621826, 18.45793008804321, 21.10904908180237, 21.01582837104797, 0.01680421829223633, 18.59471726417542, 23.25269365310669, 25.46800637245178, 19.33700466156006, 20.09835290908813, 25.59630990028381, 20.74778604507446, 18.95860433578491, 21.8296115398407, 18.08863282203674, 21.15968370437622, 24.29738640785217, 27.3376681804657, 23.14533400535583], "match_statuses": [true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true]}, "Iris Recognition": {"labels": ["Dataset_01", "Dataset_02", "Dataset_03", "Dataset_04", "Dataset_05", "Dataset_06", "Dataset_07", "Dataset_08", "Dataset_09", "Dataset_10", "Dataset_11", "Dataset_12", "Dataset_13", "Dataset_14", "Dataset_15", "Dataset_16", "Dataset_17", "Dataset_18", "Dataset_19", "Dataset_20", "Dataset_21", "Dataset_22", "Dataset_23", "Dataset_24", "Dataset_25", "Dataset_26", "Dataset_27", "Dataset_28", "Dataset_29", "Dataset_30"], "scores": [0.935021042823791, 303.841149848938, 343.838209848938, 318.978689848938, 265.663809848938, 245.784689848938, 203.905239848938, 205.421039848938, 186.095059848938, 250.851039848938, 253.910609848938, 180.201449848938, 223.309289848938, 182.958449848938, 205.302289848938, 195.864939848938, 278.975919848938, 260.457319848938, 164.193719848938, 257.854819848938, 225.223609848938, 248.818889848938, 330.179389848938, 363.313229848938, 296.664329848938, 254.231659848938, 243.004169848938, 164.393419848938, 0.587978482246398, 0.946787118911743], "response_times": [19.2189, 18.3451, 12.8266, 13.8194, 26.9589, 29.0629, 41.0242, 19.6369, 27.3895, 24.2317, 25.213, 24.6591, 19.8065, 23.8562, 20.202, 26.4907, 16.0852, 14.3239, 16.0812, 20.1943, 22.4724, 28.2018, 23.4168, 25.8781, 24.4578, 23.8845, 27.576, 20.4918, 19.7484, 16.0078], "match_statuses": [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true]}};
+    const pieData = {"Fingerprint": {"True": 38, "False": 2}, "Iris Recognition": {"True": 30, "False": 0}};
+    const summaryStats = {"Fingerprint": {"avg_response_time": 20.27, "min_response_time": 0.02, "max_response_time": 30.62, "avg_score": 122.91, "min_score": 0.0, "max_score": 515.79, "success_rate": 100.0}, "Iris Recognition": {"avg_response_time": 22.39, "min_response_time": 12.83, "max_response_time": 41.02, "avg_score": 221.86, "min_score": 0.59, "max_score": 363.31, "success_rate": 100.0}};
+
+    let barChart, scatterChart, pieChart, gaugeChart;
+
+    function buildCharts(source) {
+      const data = chartData[source];
+      const matches = pieData[source];
+      const stats = summaryStats[source];
+
+      // Update header card values
+      document.getElementById('avgResponseTime').textContent = stats.avg_response_time + " Seconds";
+      document.getElementById('minMaxResponseTime').textContent = stats.max_response_time + " s | " + stats.min_response_time + " s";
+      document.getElementById('avgScore').textContent = stats.avg_score;
+      document.getElementById('minMaxScore').textContent = stats.max_score + " s | " + stats.min_score + " s";
+
+      // Bar Chart
+      const barCtx = document.getElementById('barChart').getContext('2d');
+      if (barChart) barChart.destroy();
+      <!-- barChart = new Chart(barCtx, { -->
+        <!-- type: 'bar', -->
+        <!-- data: { -->
+          <!-- labels: data.labels, -->
+          <!-- datasets: [{ -->
+            <!-- label: 'Score', -->
+            <!-- data: data.scores, -->
+            <!-- backgroundColor: 'rgba(75, 192, 192, 0.7)' -->
+          <!-- }] -->
+        <!-- }, -->
+        <!-- options: { -->
+          <!-- plugins: { legend: { display: false }, -->
+			<!-- title: { -->
+			  <!-- display: true, -->
+			  <!-- text: 'Scoring Chart', -->
+			  <!-- align: 'center', -->
+			  <!-- padding: { -->
+				<!-- top: 10, -->
+				<!-- bottom: 20 -->
+			  <!-- }, -->
+			  <!-- font: { -->
+				<!-- size: 18, // Match this with your Pie Chart title -->
+				<!-- weight: 'bold' -->
+			  <!-- } -->
+			<!-- } -->
+		  <!-- }, -->
+          <!-- scales: { -->
+            <!-- y: { beginAtZero: true } -->
+          <!-- } -->
+        <!-- } -->
+      <!-- }); -->
+	  barChart = new Chart(barCtx, {
+		type: 'bar',
+		data: {
+			labels: data.labels,
+			datasets: [
+			  {
+				label: 'Score',
+				data: data.scores,
+				backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				yAxisID: 'y'
+			  },
+			  {
+				label: 'Response Time',
+				data: data.response_times,
+				type: 'line',
+				borderColor: 'rgba(255, 99, 132, 0.9)',
+				backgroundColor: 'rgba(255, 99, 132, 0.1)',
+				borderWidth: 2,
+				tension: 0.3,
+				yAxisID: 'y1',
+				pointRadius: 4,
+				pointHoverRadius: 6
+			  }
+			]
+		},
+		options: {
+			plugins: {
+			  legend: { display: true },
+			  title: {
+				display: true,
+				text: 'Scoring Chart',
+				align: 'center',
+				padding: { top: 10, bottom: 20 },
+				font: { size: 18, weight: 'bold' }
+			   }
+			},
+			scales: {
+				y: {
+					beginAtZero: true,
+					title: { display: true, text: 'Score' }
+				  },
+				y1: {
+					position: 'right',
+					beginAtZero: true,
+					grid: { drawOnChartArea: false }, // avoid overlap with Score grid
+					title: { display: true, text: 'Response Time (s)' }
+				  }
+			  }
+			}
+		});
+
+
+      // Scatter Chart
+      const scatterCtx = document.getElementById('scatterChart').getContext('2d');
+      if (scatterChart) scatterChart.destroy();
+      const scatterPoints = data.scores.map((score, i) => {
+        return { x: data.response_times[i], y: score };
+      });
+      scatterChart = new Chart(scatterCtx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Score vs Response Time',
+            data: scatterPoints,
+            backgroundColor: 'rgba(255, 99, 132, 0.7)'
+          }]
+        },
+        options: {
+		  plugins: {
+			legend: {
+			  display: false // Completely hides any dataset labeling
+			},
+			title: {
+			  display: true,
+			  text: 'Score vs Response Time',
+			  align: 'center',
+			  padding: {
+				top: 10,
+				bottom: 20
+			  },
+			  font: {
+				size: 18, // Match this with your Pie Chart title
+				weight: 'bold'
+			  }
+			}
+		  },
+          scales: {
+            x: { title: { display: true, text: 'Response Time (s)' } },
+            y: { title: { display: true, text: 'Score' } }
+          }
+        }
+      });
+
+      // Pie Chart
+      const pieCtx = document.getElementById('pieChart').getContext('2d');
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['True', 'False'],
+          datasets: [{
+            label: 'Match Status',
+            data: [matches["True"], matches["False"]],
+            backgroundColor: ['rgba(54, 162, 235, 0.7)', 'rgba(255, 99, 132, 0.7)']
+          }]
+        },
+        options: {
+          plugins: {
+            title: {
+			  display: true,
+			  text: 'Match Status',
+			  align: 'center',
+			  padding: {
+				top: 10,
+				bottom: 10
+			  },
+			  font: {
+				size: 18,
+				weight: 'bold'
+			  }
+			},
+			datalabels: {
+              formatter: (value, ctx) => {
+                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                return percentage;
+              },
+              color: '#000'
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+
+      // Gauge Chart (as doughnut)
+      const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
+      if (gaugeChart) gaugeChart.destroy();
+      gaugeChart = new Chart(gaugeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Success', 'Remaining'],
+          datasets: [{
+            label: 'Success Rate',
+            data: [stats.success_rate, 100 - stats.success_rate],
+            backgroundColor: ['rgba(0, 200, 83, 0.8)', 'rgba(200, 200, 200, 0.3)'],
+            borderWidth: 1,
+            cutout: '70%'
+          }]
+        },
+        options: {
+          rotation: -90,
+          circumference: 180,
+          plugins: {
+			title: {
+			  display: true,
+			  text: 'Success Rate',
+			  align: 'center',
+			  padding: {
+				top: 10,
+				bottom: 10
+			  },
+			  font: {
+				size: 18,
+				weight: 'bold'
+			  }
+			},
+            datalabels: {
+              formatter: (value, ctx) => {
+                if (ctx.dataIndex === 0) {
+                  return value + "%";
+                } else {
+                  return "";
+                }
+              },
+              color: '#000',
+              font: {
+                weight: 'bold',
+                size: 18
+              }
+            }
+          }
+        },
+        plugins: [ChartDataLabels]
+      });
+    }
+
+    function updateCharts() {
+      const selected = document.getElementById('sourceSelector').value;
+      buildCharts(selected);
+    }
+
+    buildCharts("Iris Recognition");
+  </script>
+</body>
+</html>
